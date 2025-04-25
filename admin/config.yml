@@ -2,12 +2,11 @@ backend:
   name: git-gateway
   branch: main
 
-media_folder: "jingles"      # where Netlify CMS will upload files
-public_folder: "/jingles"    # how they’ll be served
+media_folder: "jingles"
+public_folder: "/jingles"
 
 collections:
 
-  # 1) CLIENTS
   - name: "clients"
     label: "Clients"
     folder: "data/clients"
@@ -20,7 +19,6 @@ collections:
       - { name: "allowedPlaylists", label: "Allowed Playlists", widget: "list" }
       - { name: "ads",              label: "Ad Spots",         widget: "list" }
 
-  # 2) PLAYLISTS
   - name: "playlists"
     label: "Playlists"
     folder: "playlists"
@@ -30,7 +28,6 @@ collections:
       - { name: "title",  label: "Title",  widget: "string" }
       - { name: "tracks", label: "Tracks", widget: "list" }
 
-  # 3) BRAND JINGLES
   - name: "brand_jingles"
     label: "Brand Jingles"
     folder: "jingles"
@@ -40,7 +37,6 @@ collections:
       - { name: "title", label: "Title",       widget: "string" }
       - { name: "file",  label: "Jingle File", widget: "file" }
 
-  # 4) ADS
   - name: "ads"
     label: "Ad Spots"
     folder: "jingles"

@@ -124,13 +124,13 @@
   <audio id="player" style="display:none"></audio>
 
   <script>
-    // ── CLIENT / LOGIN CONFIG ─────────────────────────────────────────────────────
+    // ── CLIENT CONFIG ──────────────────────────────────────────────────────────────
     const CLIENT_CONFIGS = [
       {
-        password:        "odiseja",
-        clientName:      "odiseja",
-        displayTitle:    "📻 Radio Odiseja",
-        allowedPlaylists:[
+        password:      "odiseja",
+        clientName:    "odiseja",
+        displayTitle:  "📻 Radio Odiseja",
+        allowedPlaylists: [
           "70s_POP","80s_POP","90s_POP",
           "POP_ROCK","Easy80s90s",
           "Movie_HITS","Movie_INSTRUMENTAL"
@@ -138,10 +138,10 @@
         ads: ["spot1.mp3","spot2.mp3","spot3.mp3"]
       },
       {
-        password:        "bigbang",
-        clientName:      "bigbang",
-        displayTitle:    "📻 Radio BigBang",
-        allowedPlaylists:[
+        password:      "bigbang",
+        clientName:    "bigbang",
+        displayTitle:  "📻 Radio BigBang",
+        allowedPlaylists: [
           "70s_POP","80s_POP","90s_POP",
           "POP_ROCK","Easy80s90s",
           "Movie_HITS","Movie_INSTRUMENTAL"
@@ -150,72 +150,59 @@
       }
     ];
   
-    // ── LOGIN & INITIALIZATION ────────────────────────────────────────────────────
+    // ── LOGIN & SETUP ───────────────────────────────────────────────────────────────
     const pw  = prompt("Enter your password:");
     const cfg = CLIENT_CONFIGS.find(c => c.password === pw);
     if (!cfg) {
-      alert("Invalid password");
-      throw new Error("Authentication failed");
+      alert("Invalid password – reload to try again.");
+      throw new Error("no valid client");
     }
-  
-    const {
-      clientName,
-      displayTitle,
-      allowedPlaylists: playlists,
-      ads: adFiles
-    } = cfg;
-  
+    const { displayTitle, allowedPlaylists, ads: adFiles } = cfg;
     document.querySelector("h1").textContent = displayTitle;
   
-    // ── DOM REFS & STATE ───────────────────────────────────────────────────────────
-    const player       = document.getElementById("player");
-    const line1        = document.getElementById("screenLine1");
-    const line2        = document.getElementById("screenLine2");
-    const knob         = document.getElementById("knob");
+    // ── DOM & STATE ────────────────────────────────────────────────────────────────
+    const player = document.getElementById("player");
+    const line1  = document.getElementById("screenLine1");
+    const line2  = document.getElementById("screenLine2");
+    const knob   = document.getElementById("knob");
   
-    let playlistIdx    = 0;
-    let currentFolder  = "";
-    let trackList      = [];
-    let trackIdx       = 0;
-    let sinceLastAd    = 0;
+    let playlistIdx   = 0;
+    let trackIdx      = 0;
+    let sinceLastAd   = 0;
     const ADS_INTERVAL = 3;
-    let inSpecial      = false;  // true while playing a jingle/ad
+    let currentFolder = "";
+    let trackList     = [];
+    let inSpecial     = false;  // true when a jingle or ad is playing
   
-    // ── HELPERS ───────────────────────────────────────────────────────────────────
-    const randIdx  = arr => Math.floor(Math.random() * arr.length);
-    const randItem = arr => arr[randIdx(arr)];
-  
-    function play(src, isSpecial = false) {
-      inSpecial = isSpecial;
+    // ── PLAY FUNCTIONS ─────────────────────────────────────────────────────────────
+    function playAudio(src, special = false) {
+      inSpecial = special;
       player.src = src;
       player.play();
-      if (isSpecial) line2.textContent = "";
+      if (special) line2.textContent = "";
     }
   
-    function displayTitleFor(filename) {
-      const name  = filename.replace(/\.mp3$/i, "").trim();
+    function displayTrackTitle(filename) {
+      const name = filename.replace(/\.mp3$/i, "").trim();
       const [artist, ...rest] = name.split(" - ");
       const title = rest.join(" - ")
-        .replace(/\s+(Official|Video|Remaster|HD|Lyrics|Audio).*$/i,"")
+        .replace(/\s+(Official|Video|Remaster|HD|Lyrics|Audio).*$/i, "")
         .trim();
       line1.textContent = currentFolder;
-      line2.textContent = rest.length
-        ? `${artist} — ${title}`
-        : name;
+      line2.textContent = rest.length ? `${artist} — ${title}` : name;
     }
   
-    // ── PLAYBACK SEQUENCE ─────────────────────────────────────────────────────────
+    // ── SEQUENCE LOGIC ─────────────────────────────────────────────────────────────
     function loadPlaylist(folder) {
       currentFolder = folder;
       line1.textContent = folder;
       line2.textContent = "";
       sinceLastAd = 0;
-  
       fetch(`playlists/${folder}/${folder}.json`)
         .then(r => r.json())
         .then(data => {
           trackList = data;
-          trackIdx  = randIdx(data);
+          trackIdx  = Math.floor(Math.random() * data.length);
           playBrandJingle();
         })
         .catch(() => {
@@ -225,17 +212,21 @@
     }
   
     function playBrandJingle() {
-      // look for jingles/jingle_<PLAYLIST>.mp3
-      const path = `jingles/jingle_${currentFolder}.mp3`;
-      fetch(path)
-        .then(r => r.ok ? play(path, true) : Promise.reject())
-        .catch(() => playTrack());
+      // now pulls from jingles/brand folder at the top level
+      const path = `jingles/brand/jingle_${currentFolder}.mp3`;
+      fetch(path).then(r => {
+        if (r.ok) return playAudio(path, true);
+        throw 0;
+      }).catch(() => {
+        // if no brand jingle, go straight to track
+        autoAdvance();
+      });
     }
   
     function playNextAd() {
-      if (!adFiles.length) return playTrack();
-      const spot = randItem(adFiles);
-      play(`jingles/${spot}`, true);
+      if (!adFiles.length) return autoAdvance();
+      const spot = adFiles[Math.floor(Math.random()*adFiles.length)];
+      playAudio(`jingles/${spot}`, true);
     }
   
     function playTrack() {
@@ -245,12 +236,11 @@
         return;
       }
       const file = trackList[trackIdx];
-      displayTitleFor(file);
-      play(`playlists/${currentFolder}/${encodeURIComponent(file)}`);
+      displayTrackTitle(file);
+      playAudio(`playlists/${currentFolder}/${encodeURIComponent(file)}`, false);
     }
   
-    // ── AUTO-ADVANCE HANDLER ───────────────────────────────────────────────────────
-    player.onended = () => {
+    function autoAdvance() {
       if (inSpecial) {
         inSpecial = false;
         playTrack();
@@ -264,55 +254,41 @@
           playTrack();
         }
       }
-    };
-  
-    // ── PAUSE / RESUME ─────────────────────────────────────────────────────────────
-    function togglePause() {
-      if (!player.src) return;
-      if (player.paused) {
-        player.play();
-        displayTitleFor(trackList[trackIdx]);
-      } else {
-        player.pause();
-        line2.textContent = "⏸️ Paused";
-      }
     }
   
-    // ── KNOB INTERACTIONS ──────────────────────────────────────────────────────────
+    player.onended = autoAdvance;
+  
+    // ── KNOB (short = next playlist / long = pause) ────────────────────────────────
     let holdTimer, held = false;
-    knob.addEventListener("mousedown", () => {
+    function startHold() {
       held = false;
       holdTimer = setTimeout(() => {
         held = true;
-        togglePause();
+        if (!player.src) return;
+        if (player.paused) player.play();
+        else player.pause();
+        line2.textContent = "⏸️ Paused";
       }, 2000);
-    });
+    }
+    knob.addEventListener("mousedown", startHold);
     knob.addEventListener("mouseup", () => {
       clearTimeout(holdTimer);
       if (held) return;
-      playlistIdx = (playlistIdx + 1) % playlists.length;
-      loadPlaylist(playlists[playlistIdx]);
+      playlistIdx = (playlistIdx + 1) % allowedPlaylists.length;
+      loadPlaylist(allowedPlaylists[playlistIdx]);
     });
-  
-    knob.addEventListener("touchstart", e => {
-      e.preventDefault();
-      held = false;
-      holdTimer = setTimeout(() => {
-        held = true;
-        togglePause();
-      }, 2000);
-    });
+    knob.addEventListener("touchstart", e => { e.preventDefault(); startHold(); });
     knob.addEventListener("touchend", e => {
       e.preventDefault();
       clearTimeout(holdTimer);
       if (held) return;
-      playlistIdx = (playlistIdx + 1) % playlists.length;
-      loadPlaylist(playlists[playlistIdx]);
+      playlistIdx = (playlistIdx + 1) % allowedPlaylists.length;
+      loadPlaylist(allowedPlaylists[playlistIdx]);
     });
   
-    // ── START UP ──────────────────────────────────────────────────────────────────
-    if (playlists.length) {
-      loadPlaylist(playlists[playlistIdx]);
+    // ── START ──────────────────────────────────────────────────────────────────────
+    if (allowedPlaylists.length) {
+      loadPlaylist(allowedPlaylists[playlistIdx]);
     }
   </script>
 </body>
