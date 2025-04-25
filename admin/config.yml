@@ -2,10 +2,11 @@ backend:
   name: git-gateway
   branch: main
 
-media_folder: "jingles"    # where uploaded files are stored in your repo
-public_folder: "/jingles"  # how they’re referenced in the browser
+media_folder: "jingles"      # where Netlify CMS will upload files
+public_folder: "/jingles"    # how they’ll be served
 
 collections:
+
   # 1) CLIENTS
   - name: "clients"
     label: "Clients"
@@ -13,12 +14,11 @@ collections:
     create: true
     slug: "{{slug}}"
     fields:
-      - { name: "title",           label: "Entry Title",       widget: "string", hint: "e.g. 'Radio Odiseja'" }
-      - { name: "password",        label: "Password",          widget: "string" }
-      - { name: "clientName",      label: "Client Name",       widget: "string" }
-      - { name: "displayTitle",    label: "Display Title",     widget: "string" }
-      - { name: "allowedPlaylists",label: "Allowed Playlists", widget: "list" }
-      - { name: "ads",             label: "Ad Spots",          widget: "list" }
+      - { name: "password",         label: "Password",         widget: "string" }
+      - { name: "clientName",       label: "Client Name",      widget: "string" }
+      - { name: "displayTitle",     label: "Display Title",    widget: "string" }
+      - { name: "allowedPlaylists", label: "Allowed Playlists", widget: "list" }
+      - { name: "ads",              label: "Ad Spots",         widget: "list" }
 
   # 2) PLAYLISTS
   - name: "playlists"
@@ -30,40 +30,22 @@ collections:
       - { name: "title",  label: "Title",  widget: "string" }
       - { name: "tracks", label: "Tracks", widget: "list" }
 
-  # 3) BRAND JINGLES (per-client folders)
-  - name: "brand_jingles_odiseja"
-    label: "Odiseja Brand Jingles"
-    folder: "jingles/odiseja/brand"
+  # 3) BRAND JINGLES
+  - name: "brand_jingles"
+    label: "Brand Jingles"
+    folder: "jingles"
     create: true
     slug: "{{slug}}"
     fields:
       - { name: "title", label: "Title",       widget: "string" }
       - { name: "file",  label: "Jingle File", widget: "file" }
 
-  - name: "brand_jingles_bigbang"
-    label: "BigBang Brand Jingles"
-    folder: "jingles/bigbang/brand"
+  # 4) ADS
+  - name: "ads"
+    label: "Ad Spots"
+    folder: "jingles"
     create: true
     slug: "{{slug}}"
     fields:
-      - { name: "title", label: "Title",       widget: "string" }
-      - { name: "file",  label: "Jingle File", widget: "file" }
-
-  # 4) ADS (per-client folders)
-  - name: "ads_odiseja"
-    label: "Odiseja Ad Spots"
-    folder: "jingles/odiseja/ads"
-    create: true
-    slug: "{{slug}}"
-    fields:
-      - { name: "title", label: "Title",    widget: "string" }
-      - { name: "file",  label: "Ad File",  widget: "file" }
-
-  - name: "ads_bigbang"
-    label: "BigBang Ad Spots"
-    folder: "jingles/bigbang/ads"
-    create: true
-    slug: "{{slug}}"
-    fields:
-      - { name: "title", label: "Title",    widget: "string" }
-      - { name: "file",  label: "Ad File",  widget: "file" }
+      - { name: "title", label: "Title",   widget: "string" }
+      - { name: "file",  label: "Ad File", widget: "file" }

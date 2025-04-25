@@ -167,23 +167,23 @@
   
     document.querySelector("h1").textContent = displayTitle;
   
-    // ── SETTINGS & STATE ──────────────────────────────────────────────────────────
-    const player   = document.getElementById("player");
-    const line1    = document.getElementById("screenLine1");
-    const line2    = document.getElementById("screenLine2");
-    const knob     = document.getElementById("knob");
+    // ── DOM REFS & STATE ───────────────────────────────────────────────────────────
+    const player       = document.getElementById("player");
+    const line1        = document.getElementById("screenLine1");
+    const line2        = document.getElementById("screenLine2");
+    const knob         = document.getElementById("knob");
   
-    let playlistIdx      = 0;
-    let currentFolder    = "";
-    let trackList        = [];
-    let trackIdx         = 0;
-    let sinceLastAd      = 0;
-    const ADS_INTERVAL   = 3;
-    let inSpecial        = false;  // true while a jingle or ad is playing
+    let playlistIdx    = 0;
+    let currentFolder  = "";
+    let trackList      = [];
+    let trackIdx       = 0;
+    let sinceLastAd    = 0;
+    const ADS_INTERVAL = 3;
+    let inSpecial      = false;  // true while playing a jingle/ad
   
     // ── HELPERS ───────────────────────────────────────────────────────────────────
-    const randomIndex = arr => Math.floor(Math.random() * arr.length);
-    const randomItem  = arr => arr[randomIndex(arr)];
+    const randIdx  = arr => Math.floor(Math.random() * arr.length);
+    const randItem = arr => arr[randIdx(arr)];
   
     function play(src, isSpecial = false) {
       inSpecial = isSpecial;
@@ -192,17 +192,19 @@
       if (isSpecial) line2.textContent = "";
     }
   
-    function displayTrackTitle(fn) {
-      const name  = fn.replace(/\.mp3$/i, "").trim();
+    function displayTitleFor(filename) {
+      const name  = filename.replace(/\.mp3$/i, "").trim();
       const [artist, ...rest] = name.split(" - ");
       const title = rest.join(" - ")
-        .replace(/\s+(Official|Video|Remaster|HD|Lyrics|Audio).*$/i, "")
+        .replace(/\s+(Official|Video|Remaster|HD|Lyrics|Audio).*$/i,"")
         .trim();
       line1.textContent = currentFolder;
-      line2.textContent = rest.length ? `${artist} — ${title}` : name;
+      line2.textContent = rest.length
+        ? `${artist} — ${title}`
+        : name;
     }
   
-    // ── PLAY SEQUENCES ─────────────────────────────────────────────────────────────
+    // ── PLAYBACK SEQUENCE ─────────────────────────────────────────────────────────
     function loadPlaylist(folder) {
       currentFolder = folder;
       line1.textContent = folder;
@@ -213,7 +215,7 @@
         .then(r => r.json())
         .then(data => {
           trackList = data;
-          trackIdx  = randomIndex(data);
+          trackIdx  = randIdx(data);
           playBrandJingle();
         })
         .catch(() => {
@@ -223,7 +225,8 @@
     }
   
     function playBrandJingle() {
-      const path = `jingles/${clientName}/brand/jingle_${currentFolder}.mp3`;
+      // look for jingles/jingle_<PLAYLIST>.mp3
+      const path = `jingles/jingle_${currentFolder}.mp3`;
       fetch(path)
         .then(r => r.ok ? play(path, true) : Promise.reject())
         .catch(() => playTrack());
@@ -231,8 +234,8 @@
   
     function playNextAd() {
       if (!adFiles.length) return playTrack();
-      const spot = randomItem(adFiles);
-      play(`jingles/${clientName}/ads/${spot}`, true);
+      const spot = randItem(adFiles);
+      play(`jingles/${spot}`, true);
     }
   
     function playTrack() {
@@ -242,18 +245,16 @@
         return;
       }
       const file = trackList[trackIdx];
-      displayTrackTitle(file);
-      play(`playlists/${currentFolder}/${encodeURIComponent(file)}`, false);
+      displayTitleFor(file);
+      play(`playlists/${currentFolder}/${encodeURIComponent(file)}`);
     }
   
-    // ── AUTO ADVANCE ───────────────────────────────────────────────────────────────
+    // ── AUTO-ADVANCE HANDLER ───────────────────────────────────────────────────────
     player.onended = () => {
       if (inSpecial) {
-        // after jingle or ad, play the next track
         inSpecial = false;
         playTrack();
       } else {
-        // after track, increment and maybe run an ad
         trackIdx++;
         sinceLastAd++;
         if (sinceLastAd >= ADS_INTERVAL) {
@@ -270,7 +271,7 @@
       if (!player.src) return;
       if (player.paused) {
         player.play();
-        displayTrackTitle(trackList[trackIdx]);
+        displayTitleFor(trackList[trackIdx]);
       } else {
         player.pause();
         line2.textContent = "⏸️ Paused";
@@ -289,12 +290,10 @@
     knob.addEventListener("mouseup", () => {
       clearTimeout(holdTimer);
       if (held) return;
-      // short press → next playlist
       playlistIdx = (playlistIdx + 1) % playlists.length;
       loadPlaylist(playlists[playlistIdx]);
     });
   
-    // support touch on mobile
     knob.addEventListener("touchstart", e => {
       e.preventDefault();
       held = false;
