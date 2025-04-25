@@ -1,0 +1,51 @@
+backend:
+  name: git-gateway
+  branch: main           # or master, whichever your default is
+
+media_folder: "jingles/{{media_folder}}"
+public_folder: "/jingles/{{media_folder}}"
+
+collections:
+
+  # 1) CLIENTS
+  - name: "clients"
+    label: "Clients"
+    folder: "data/clients"       # make this folder to store client JSON
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { name: "password", label: "Password" }
+      - { name: "clientName", label: "Client Name" }
+      - { name: "displayTitle", label: "Display Title" }
+      - { name: "allowedPlaylists", label: "Allowed Playlists", widget: list }
+      - { name: "ads", label: "Ad Spots", widget: list }
+
+  # 2) PLAYLISTS
+  - name: "playlists"
+    label: "Playlists"
+    folder: "playlists"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { name: "tracks", label: "Tracks", widget: list }
+
+  # 3) BRAND JINGLES
+  - name: "brand_jingles"
+    label: "Brand Jingles"
+    folder: "jingles/brand"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { name: "clientName", label: "Client", widget: select, options: ["odiseja","bigbang"] }
+      - { name: "playlist",   label: "Playlist", widget: select, options: ["70s_POP","80s_POP","90s_POP","POP_ROCK","Easy80s90s","Movie_HITS","Movie_INSTRUMENTAL"] }
+      - { name: "file",        label: "Jingle File", widget: file }
+
+  # 4) AD SPOTS
+  - name: "ads"
+    label: "Ad Spots"
+    folder: "jingles/ads"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { name: "clientName", label: "Client", widget: select, options: ["odiseja","bigbang"] }
+      - { name: "file",        label: "Ad File", widget: file }
