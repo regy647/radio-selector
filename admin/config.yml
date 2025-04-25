@@ -1,51 +1,56 @@
+# admin/config.yml
 backend:
   name: git-gateway
-  branch: main           # or master, whichever your default is
+  branch: main       # or "master" if that's your default
 
-media_folder: "jingles/{{media_folder}}"
+media_folder: "jingles/{{media_folder}}"    # not strictly required
 public_folder: "/jingles/{{media_folder}}"
 
 collections:
 
-  # 1) CLIENTS
+  # 1) Clients
   - name: "clients"
     label: "Clients"
-    folder: "data/clients"       # make this folder to store client JSON
+    folder: "data/clients"
     create: true
     slug: "{{slug}}"
+    summary: "{{displayTitle}}"
     fields:
-      - { name: "password", label: "Password" }
-      - { name: "clientName", label: "Client Name" }
-      - { name: "displayTitle", label: "Display Title" }
-      - { name: "allowedPlaylists", label: "Allowed Playlists", widget: list }
-      - { name: "ads", label: "Ad Spots", widget: list }
+      - { name: "password",     label: "Password", widget: "string" }
+      - { name: "clientName",   label: "Client Name", widget: "string" }
+      - { name: "displayTitle", label: "Display Title", widget: "string" }
+      - { name: "allowedPlaylists", label: "Allowed Playlists", widget: "list" }
+      - { name: "ads",          label: "Ad Spots", widget: "list" }
 
-  # 2) PLAYLISTS
+  # 2) Playlists
   - name: "playlists"
     label: "Playlists"
     folder: "playlists"
     create: true
     slug: "{{slug}}"
+    summary: "{{slug}}"
     fields:
-      - { name: "tracks", label: "Tracks", widget: list }
+      - { name: "tracks", label: "Tracks", widget: "list" }
 
-  # 3) BRAND JINGLES
+  # 3) Brand Jingles
   - name: "brand_jingles"
     label: "Brand Jingles"
-    folder: "jingles/brand"
+    folder: "jingles/{{media_folder}}/brand"
     create: true
     slug: "{{slug}}"
+    summary: "{{clientName}} | {{playlist}}"
     fields:
-      - { name: "clientName", label: "Client", widget: select, options: ["odiseja","bigbang"] }
-      - { name: "playlist",   label: "Playlist", widget: select, options: ["70s_POP","80s_POP","90s_POP","POP_ROCK","Easy80s90s","Movie_HITS","Movie_INSTRUMENTAL"] }
-      - { name: "file",        label: "Jingle File", widget: file }
+      - { name: "clientName", label: "Client",  widget: "select", options: ["odiseja","bigbang"] }
+      - { name: "playlist",   label: "Playlist", widget: "select", options: ["80s_POP","90s_POP","POP_ROCK", …] }
+      - { name: "file",       label: "File",     widget: "file" }
 
-  # 4) AD SPOTS
+  # 4) Ad Spots
   - name: "ads"
     label: "Ad Spots"
-    folder: "jingles/ads"
+    folder: "jingles/{{media_folder}}/ads"
     create: true
     slug: "{{slug}}"
+    summary: "{{slug}}"
     fields:
-      - { name: "clientName", label: "Client", widget: select, options: ["odiseja","bigbang"] }
-      - { name: "file",        label: "Ad File", widget: file }
+      - { name: "clientName", label: "Client", widget: "select", options: ["odiseja","bigbang"] }
+      - { name: "file",       label: "File",   widget: "file" }
