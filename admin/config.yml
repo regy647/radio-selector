@@ -2,58 +2,68 @@ backend:
   name: git-gateway
   branch: main
 
-media_folder: "jingles/{{media_folder}}"
-public_folder: "/jingles/{{media_folder}}"
+media_folder: "jingles"    # where uploaded files are stored in your repo
+public_folder: "/jingles"  # how they’re referenced in the browser
 
 collections:
-
   # 1) CLIENTS
-  - name:    "clients"
-    label:   "Clients"
-    folder:  "data/clients"
-    create:  true
-    slug:    "{{slug}}"
-    summary: "{{displayTitle}}"
-
+  - name: "clients"
+    label: "Clients"
+    folder: "data/clients"
+    create: true
+    slug: "{{slug}}"
     fields:
-      - { name: "password",       label: "Password",        widget: "string" }
-      - { name: "clientName",     label: "Client Name",     widget: "string" }
-      - { name: "displayTitle",   label: "Display Title",    widget: "string" }
-      - { name: "allowedPlaylists", label: "Allowed Playlists", widget: "list" }
-      - { name: "ads",            label: "Ad Spots",        widget: "list" }
+      - { name: "title",           label: "Entry Title",       widget: "string", hint: "e.g. 'Radio Odiseja'" }
+      - { name: "password",        label: "Password",          widget: "string" }
+      - { name: "clientName",      label: "Client Name",       widget: "string" }
+      - { name: "displayTitle",    label: "Display Title",     widget: "string" }
+      - { name: "allowedPlaylists",label: "Allowed Playlists", widget: "list" }
+      - { name: "ads",             label: "Ad Spots",          widget: "list" }
 
   # 2) PLAYLISTS
-  - name:    "playlists"
-    label:   "Playlists"
-    folder:  "playlists"
-    create:  true
-    slug:    "{{slug}}"
-    summary: "{{slug}}"     # <-- prevents "missing title" error
-
+  - name: "playlists"
+    label: "Playlists"
+    folder: "playlists"
+    create: true
+    slug: "{{slug}}"
     fields:
+      - { name: "title",  label: "Title",  widget: "string" }
       - { name: "tracks", label: "Tracks", widget: "list" }
 
-  # 3) BRAND JINGLES
-  - name:    "brand_jingles"
-    label:   "Brand Jingles"
-    folder:  "jingles/{{media_folder}}/brand"
-    create:  true
-    slug:    "{{slug}}"
-    summary: "{{clientName}} • {{playlist}}"
-
+  # 3) BRAND JINGLES (per-client folders)
+  - name: "brand_jingles_odiseja"
+    label: "Odiseja Brand Jingles"
+    folder: "jingles/odiseja/brand"
+    create: true
+    slug: "{{slug}}"
     fields:
-      - { name: "clientName", label: "Client",   widget: "select", options: ["odiseja","bigbang"] }
-      - { name: "playlist",   label: "Playlist", widget: "select", options: ["70s_POP","80s_POP","90s_POP","POP_ROCK","Easy80s90s","Movie_HITS","Movie_INSTRUMENTAL"] }
-      - { name: "file",       label: "File",     widget: "file" }
+      - { name: "title", label: "Title",       widget: "string" }
+      - { name: "file",  label: "Jingle File", widget: "file" }
 
-  # 4) AD SPOTS
-  - name:    "ads"
-    label:   "Ad Spots"
-    folder:  "jingles/{{media_folder}}/ads"
-    create:  true
-    slug:    "{{slug}}"
-    summary: "{{slug}}"
-
+  - name: "brand_jingles_bigbang"
+    label: "BigBang Brand Jingles"
+    folder: "jingles/bigbang/brand"
+    create: true
+    slug: "{{slug}}"
     fields:
-      - { name: "clientName", label: "Client", widget: "select", options: ["odiseja","bigbang"] }
-      - { name: "file",       label: "File",   widget: "file" }
+      - { name: "title", label: "Title",       widget: "string" }
+      - { name: "file",  label: "Jingle File", widget: "file" }
+
+  # 4) ADS (per-client folders)
+  - name: "ads_odiseja"
+    label: "Odiseja Ad Spots"
+    folder: "jingles/odiseja/ads"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { name: "title", label: "Title",    widget: "string" }
+      - { name: "file",  label: "Ad File",  widget: "file" }
+
+  - name: "ads_bigbang"
+    label: "BigBang Ad Spots"
+    folder: "jingles/bigbang/ads"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { name: "title", label: "Title",    widget: "string" }
+      - { name: "file",  label: "Ad File",  widget: "file" }
