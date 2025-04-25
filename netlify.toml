@@ -1,9 +1,8 @@
-[[redirects]]
-  from = "/admin/config.yml"
-  to   = "/admin/config.yml"
-  status = 200
+[build]
+  publish = "."           # or "public" if that's your folder
 
 [[redirects]]
-  from = "/admin/*"
-  to   = "/admin/index.html"
+  from   = "/admin/*"
+  to     = "/admin/index.html"
   status = 200
+  force  = true
