@@ -157,7 +157,8 @@
       alert("Invalid password – reload to try again.");
       throw new Error("no valid client");
     }
-    const { displayTitle, allowedPlaylists, ads: adFiles } = cfg;
+    // **Make sure we pull allowedPlaylists out!**
+    const { displayTitle, allowedPlaylists, clientName, ads: adFiles } = cfg;
     document.querySelector("h1").textContent = displayTitle;
   
     // ── DOM & STATE ────────────────────────────────────────────────────────────────
@@ -198,10 +199,12 @@
       line1.textContent = folder;
       line2.textContent = "";
       sinceLastAd = 0;
+  
       fetch(`playlists/${folder}/${folder}.json`)
         .then(r => r.json())
         .then(data => {
           trackList = data;
+          // **random start index**
           trackIdx  = Math.floor(Math.random() * data.length);
           playBrandJingle();
         })
@@ -212,20 +215,20 @@
     }
   
     function playBrandJingle() {
-      // now pulls from jingles/brand folder at the top level
-      const path = `jingles/brand/jingle_${currentFolder}.mp3`;
+      // **flat 'jingles' folder** (no clientName subfolder)
+      const path = `jingles/jingle_${clientName}_${currentFolder}.mp3`;
       fetch(path).then(r => {
         if (r.ok) return playAudio(path, true);
         throw 0;
       }).catch(() => {
-        // if no brand jingle, go straight to track
+        // if no brand jingle, go straight to playing the first track
         autoAdvance();
       });
     }
   
     function playNextAd() {
       if (!adFiles.length) return autoAdvance();
-      const spot = adFiles[Math.floor(Math.random()*adFiles.length)];
+      const spot = adFiles[Math.floor(Math.random() * adFiles.length)];
       playAudio(`jingles/${spot}`, true);
     }
   
@@ -242,9 +245,11 @@
   
     function autoAdvance() {
       if (inSpecial) {
+        // after jingle or ad → play a track
         inSpecial = false;
         playTrack();
       } else {
+        // after a track → maybe ad or next track
         trackIdx++;
         sinceLastAd++;
         if (sinceLastAd >= ADS_INTERVAL) {
@@ -274,6 +279,7 @@
     knob.addEventListener("mouseup", () => {
       clearTimeout(holdTimer);
       if (held) return;
+      // **cycle through your allowedPlaylists**
       playlistIdx = (playlistIdx + 1) % allowedPlaylists.length;
       loadPlaylist(allowedPlaylists[playlistIdx]);
     });
