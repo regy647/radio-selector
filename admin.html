@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>⚙️ Radio Admin</title>
+  <style>
+    body { font-family: sans-serif; padding:2em; max-width:800px; margin:auto; }
+    fieldset { margin-bottom:1.5em; }
+    legend { font-weight:bold; }
+    label { display:block; margin:0.5em 0 0.2em; }
+    input, select, button { width:100%; padding:0.5em; }
+  </style>
+</head>
+<body>
+
+  <h1>🎛 Radio Admin</h1>
+  <div id="login">
+    <label>Admin Password</label>
+    <input type="password" id="adminPw" placeholder="••••••">
+    <button onclick="tryLogin()">Login</button>
+    <p id="loginError" style="color:red"></p>
+  </div>
+
+  <div id="adminUI" style="display:none">
+
+    <!-- 1) Create / Edit Clients -->
+    <fieldset>
+      <legend>Client Configuration</legend>
+      <label>Client Password (used to log in)</label>
+      <input type="text" id="newClientPassword">
+
+      <label>Client Name (folder under `jingles/`)</label>
+      <input type="text" id="newClientName">
+
+      <label>Display Title</label>
+      <input type="text" id="newDisplayTitle">
+
+      <label>Allowed Playlists (multi-select)</label>
+      <select id="newAllowed" multiple size="6">
+        <!-- you’ll populate these options from /api/playlists -->
+      </select>
+
+      <button onclick="saveClient()">Save Client</button>
+      <p id="clientMsg"></p>
+    </fieldset>
+
+    <!-- 2) Add a New Playlist JSON -->
+    <fieldset>
+      <legend>New Playlist</legend>
+      <label>Playlist Folder Name</label>
+      <input type="text" id="playlistFolder">
+
+      <label>Upload `.json` File</label>
+      <input type="file" id="playlistJson">
+
+      <label>Upload Audio Files (multiple)</label>
+      <input type="file" id="playlistAudio" multiple accept="audio/mp3">
+
+      <button onclick="savePlaylist()">Save Playlist</button>
+      <p id="playlistMsg"></p>
+    </fieldset>
+
+    <!-- 3) Upload Brand Jingle -->
+    <fieldset>
+      <legend>Brand Jingles</legend>
+      <label>Client</label>
+      <select id="brandClient">
+        <!-- same list as clients -->
+      </select>
+
+      <label>Playlist</label>
+      <select id="brandPlaylist">
+        <!-- list of all playlists -->
+      </select>
+
+      <label>Upload Jingle File</label>
+      <input type="file" id="brandJingle">
+
+      <button onclick="saveBrandJingle()">Upload Brand Jingle</button>
+      <p id="brandMsg"></p>
+    </fieldset>
+
+    <!-- 4) Upload Ad Spots -->
+    <fieldset>
+      <legend>Ad Spots</legend>
+      <label>Client</label>
+      <select id="adClient"></select>
+
+      <label>Upload Ad Audio(s)</label>
+      <input type="file" id="adsFiles" multiple accept="audio/mp3">
+
+      <button onclick="saveAds()">Upload Ads</button>
+      <p id="adsMsg"></p>
+    </fieldset>
+
+  </div>
+
+  <script>
+    // — simple “admin” password, different from client passwords —
+    const ADMIN_PASSWORD = "Sup3rS3cr3t!";
+    function tryLogin(){
+      if (document.getElementById("adminPw").value === ADMIN_PASSWORD){
+        document.getElementById("login").style.display = "none";
+        document.getElementById("adminUI").style.display = "block";
+        loadAllOptions();
+      } else {
+        document.getElementById("loginError").textContent = "Wrong password!";
+      }
+    }
+
+    // — loads playlists and clients to populate select lists —
+    async function loadAllOptions(){
+      // you’d implement these API endpoints server-side
+      const [plsRes, clRes] = await Promise.all([
+        fetch('/api/playlists'),   // returns [ "80s_POP", ... ]
+        fetch('/api/clients')      // returns [ "odiseja", "bigbang" ]
+      ]);
+      const playlists = await plsRes.json();
+      const clients   = await clRes.json();
+
+      let sel = document.getElementById("newAllowed");
+      playlists.forEach(p => sel.add(new Option(p,p)));
+
+      ['brandClient','adClient'].forEach(id => {
+        let s = document.getElementById(id);
+        clients.forEach(c => s.add(new Option(c,c)));
+      });
+
+      let bp = document.getElementById("brandPlaylist");
+      playlists.forEach(p => bp.add(new Option(p,p)));
+    }
+
+    // — POST new client config —
+    function saveClient(){
+      const payload = {
+        password:       document.getElementById("newClientPassword").value,
+        clientName:     document.getElementById("newClientName").value,
+        displayTitle:   document.getElementById("newDisplayTitle").value,
+        allowedPlaylists: [...document.getElementById("newAllowed").selectedOptions].map(o=>o.value)
+      };
+      fetch('/api/clients', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      })
+      .then(r=>r.ok?clientSuccess():clientFail())
+      .catch(clientFail);
+    }
+    function clientSuccess(){ document.getElementById("clientMsg").textContent = "Saved!"; }
+    function clientFail(){ document.getElementById("clientMsg").textContent = "Error saving."; }
+
+    // — POST new playlist JSON + audio files —
+    function savePlaylist(){
+      const folder = document.getElementById("playlistFolder").value;
+      const jsonF  = document.getElementById("playlistJson").files[0];
+      const audios = [...document.getElementById("playlistAudio").files];
+      const form = new FormData();
+      form.append('folder', folder);
+      form.append('json', jsonF);
+      audios.forEach(f=>form.append('audio', f));
+      fetch('/api/playlists', { method:'POST', body:form })
+        .then(r=>r.ok?plSuccess():plFail())
+        .catch(plFail);
+    }
+    function plSuccess(){ document.getElementById("playlistMsg").textContent = "Playlist created."; }
+    function plFail(){ document.getElementById("playlistMsg").textContent = "Error creating playlist."; }
+
+    // — POST brand jingle —
+    function saveBrandJingle(){
+      const client   = document.getElementById("brandClient").value;
+      const playlist = document.getElementById("brandPlaylist").value;
+      const file     = document.getElementById("brandJingle").files[0];
+      const form     = new FormData();
+      form.append('client', client);
+      form.append('playlist', playlist);
+      form.append('file', file);
+      fetch('/api/brandJingle', { method:'POST', body:form })
+        .then(r=>r.ok?bSuccess():bFail())
+        .catch(bFail);
+    }
+    function bSuccess(){ document.getElementById("brandMsg").textContent = "Uploaded."; }
+    function bFail(){ document.getElementById("brandMsg").textContent = "Error."; }
+
+    // — POST ads —
+    function saveAds(){
+      const client = document.getElementById("adClient").value;
+      const files  = [...document.getElementById("adsFiles").files];
+      const form   = new FormData();
+      form.append('client', client);
+      files.forEach(f=>form.append('ads', f));
+      fetch('/api/ads', { method:'POST', body:form })
+        .then(r=>r.ok?aSuccess():aFail())
+        .catch(aFail);
+    }
+    function aSuccess(){ document.getElementById("adsMsg").textContent = "Ads uploaded."; }
+    function aFail(){ document.getElementById("adsMsg").textContent = "Error."; }
+
+  </script>
+</body>
+</html>
